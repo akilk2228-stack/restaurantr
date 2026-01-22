@@ -4,52 +4,44 @@
   <meta charset="UTF-8">
   <title>Restaurant QR Order</title>
 
-  <!-- Firebase -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
-    body { font-family: Arial; margin: 0; padding: 0; }
-    header { background: #b71c1c; color: white; padding: 15px; font-size: 20px; }
-    .box { padding: 15px; }
-    .item {
-      border-bottom: 1px solid #ddd;
-      padding: 10px 0;
-    }
-    button {
-      padding: 6px 10px;
-      margin-left: 10px;
-    }
-    #total {
-      font-size: 18px;
-      margin-top: 10px;
-    }
+    body { font-family: Arial; margin: 0; }
+    header { background: #b71c1c; color: white; padding: 12px; font-size: 18px; }
+    .container { padding: 15px; }
+    .item { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    button { padding: 5px 10px; }
+    .total { font-size: 18px; margin-top: 15px; }
   </style>
 </head>
+
 <body>
 
 <header>🍽 Restaurant QR Order</header>
 
-<div class="box">
-  <b>Table:</b> <span id="tableNo"></span><br><br>
+<div class="container">
+  <label>Table:</label>
+  <input id="table" value="1"><br><br>
 
-  <input id="custName" placeholder="Your Name" style="width:100%;padding:8px;"><br><br>
+  <label>Name:</label>
+  <input id="customer" placeholder="Your name"><br><br>
 
   <h3>Menu</h3>
   <div id="menu"></div>
 
-  <div id="total">Total: ₹0</div><br>
-
-  <button onclick="placeOrder()">Order Place</button>
+  <div class="total">Total: ₹<span id="total">0</span></div>
 </div>
 
 <script>
-  // 🔥 Firebase Config (tumhara)
+  // 🔥 FIREBASE CONFIG (YOUR PROJECT)
   const firebaseConfig = {
     apiKey: "AIzaSyCgaZ9DqGuszvycCRuJceNvg7G86OTc9oU",
     authDomain: "restaurant-55333.firebaseapp.com",
     projectId: "restaurant-55333",
-    storageBucket: "restaurant-55333.firebasestorage.app",
+    storageBucket: "restaurant-55333.appspot.com",
     messagingSenderId: "279347685173",
     appId: "1:279347685173:web:cb1a120e25e3adb856ce7c"
   };
@@ -57,31 +49,35 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // 📌 Table detect from QR
-  const params = new URLSearchParams(window.location.search);
-  const table = params.get("table") || "N/A";
-  document.getElementById("tableNo").innerText = table;
-
-  let cart = [];
   let total = 0;
 
-  // 📌 Load Menu
-  db.collection("menu")
-    .where("available", "==", true)
-    .onSnapshot(snapshot => {
-      const menuDiv = document.getElementById("menu");
-      menuDiv.innerHTML = "";
+  function add(price) {
+    total += price;
+    document.getElementById("total").innerText = total;
+  }
 
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        menuDiv.innerHTML += `
-          <div class="item">
-            ${d.name} - ₹${d.price}
-            <button onclick="addItem('${d.name}', ${d.price})">Add</button>
-          </div>
-        `;
-      });
+  // 🔥 FETCH MENU FROM FIRESTORE
+  db.collection("menu").where("available", "==", true).onSnapshot(snapshot => {
+    const menuDiv = document.getElementById("menu");
+    menuDiv.innerHTML = "";
+    total = 0;
+    document.getElementById("total").innerText = "0";
+
+    snapshot.forEach(doc => {
+      const item = doc.data();
+      menuDiv.innerHTML += `
+        <div class="item">
+          <span>${item.name} - ₹${item.price}</span>
+          <button onclick="add(${item.price})">Add</button>
+        </div>
+      `;
     });
+  });
+</script>
+
+</body>
+</html>
+
 
   function addItem(name, price) {
     cart.push({ name, price });
@@ -114,4 +110,5 @@
 
 </body>
 </html>
+
 
