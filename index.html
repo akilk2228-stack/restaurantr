@@ -3,18 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <title>Restaurant QR Order</title>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body { font-family: Arial; margin: 0; }
-    header { background: #b71c1c; color: white; padding: 12px; font-size: 18px; }
-    .container { padding: 15px; }
-    .item { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    button { padding: 5px 10px; }
-    .total { font-size: 18px; margin-top: 15px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    header {
+      background: #b71c1c;
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-size: 20px;
+    }
+    .box {
+      background: white;
+      margin: 10px;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+    }
+    button {
+      padding: 5px 10px;
+    }
+    .total {
+      font-size: 18px;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -22,21 +45,27 @@
 
 <header>🍽 Restaurant QR Order</header>
 
-<div class="container">
-  <label>Table:</label>
-  <input id="table" value="1"><br><br>
-
-  <label>Name:</label>
-  <input id="customer" placeholder="Your name"><br><br>
-
-  <h3>Menu</h3>
-  <div id="menu"></div>
-
-  <div class="total">Total: ₹<span id="total">0</span></div>
+<div class="box">
+  <div>Table: <span id="tableNo">-</span></div><br>
+  <input id="customerName" placeholder="Enter your name" style="width:100%;padding:6px;">
 </div>
 
+<div class="box">
+  <h3>Menu</h3>
+  <div id="menu"></div>
+</div>
+
+<div class="box">
+  <div class="total">Total: ₹<span id="total">0</span></div><br>
+  <button onclick="placeOrder()">Place Order</button>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <script>
-  // 🔥 FIREBASE CONFIG (YOUR PROJECT)
+  // 🔥 YOUR FIREBASE CONFIG
   const firebaseConfig = {
     apiKey: "AIzaSyCgaZ9DqGuszvycCRuJceNvg7G86OTc9oU",
     authDomain: "restaurant-55333.firebaseapp.com",
@@ -49,66 +78,34 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
+  let cart = [];
   let total = 0;
 
-  function add(price) {
-    total += price;
-    document.getElementById("total").innerText = total;
-  }
+  // TABLE FROM URL
+  const params = new URLSearchParams(window.location.search);
+  const table = params.get("table") || "1";
+  document.getElementById("tableNo").innerText = table;
 
-  // 🔥 FETCH MENU FROM FIRESTORE
-  db.collection("menu").where("available", "==", true).onSnapshot(snapshot => {
-    const menuDiv = document.getElementById("menu");
-    menuDiv.innerHTML = "";
-    total = 0;
-    document.getElementById("total").innerText = "0";
+  // LOAD MENU
+  db.collection("menu").where("available", "==", true)
+    .onSnapshot(snapshot => {
+      const menuDiv = document.getElementById("menu");
+      menuDiv.innerHTML = "";
 
-    snapshot.forEach(doc => {
-      const item = doc.data();
-      menuDiv.innerHTML += `
-        <div class="item">
-          <span>${item.name} - ₹${item.price}</span>
-          <button onclick="add(${item.price})">Add</button>
-        </div>
-      `;
+      snapshot.forEach(doc => {
+        const item = doc.data();
+
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        div.innerHTML = `
+          <div>${item.name} - ₹${item.price}</div>
+          <button onclick="addItem('${item.name}', ${item.price})">Add</button>
+        `;
+        menuDiv.appendChild(div);
+      });
     });
-  });
-</script>
-
-</body>
-</html>
-
 
   function addItem(name, price) {
     cart.push({ name, price });
     total += price;
-    document.getElementById("total").innerText = "Total: ₹" + total;
-  }
-
-  function placeOrder() {
-    const name = document.getElementById("custName").value;
-    if (!name || cart.length === 0) {
-      alert("Name or items missing");
-      return;
-    }
-
-    db.collection("orders").add({
-      table: table,
-      customer: name,
-      items: cart,
-      total: total,
-      status: "pending",
-      time: new Date()
-    });
-
-    alert("Order placed successfully!");
-    cart = [];
-    total = 0;
-    document.getElementById("total").innerText = "Total: ₹0";
-  }
-</script>
-
-</body>
-</html>
-
-
+    document.getElement
